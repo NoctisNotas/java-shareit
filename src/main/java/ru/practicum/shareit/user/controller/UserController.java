@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -27,12 +28,12 @@ public class UserController {
     }
 
     @PostMapping
-    public UserDto create(@RequestBody UserDto userDto) {
+    public UserDto create(@Valid @RequestBody UserDto userDto) {
         return userService.create(userDto);
     }
 
     @PatchMapping("/{id}")
-    public UserDto update(@RequestBody UserDto userDto, @PathVariable Long id) {
+    public UserDto update(@Valid @RequestBody UserDto userDto, @PathVariable Long id) {
         userDto.setId(id);
         return userService.update(userDto);
     }

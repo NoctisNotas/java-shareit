@@ -11,19 +11,19 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler
+    @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFoundException(final NotFoundException e) {
         return Map.of("error", e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> handleValidationException(final ValidationException e) {
         return Map.of("error", e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleBadRequestException(final BadRequestException e) {
         return Map.of("error", e.getMessage());
@@ -43,5 +43,11 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleMissingHeaders(MissingRequestHeaderException ex) {
         return Map.of("error", "Required header 'X-Sharer-User-Id' is missing");
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleOtherExceptions(Exception ex) {
+        return Map.of("error", "Internal server error: " + ex.getMessage());
     }
 }

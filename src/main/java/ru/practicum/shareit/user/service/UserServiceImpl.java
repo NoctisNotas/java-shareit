@@ -6,8 +6,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.exception.NotFoundException;
-
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -30,9 +28,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getById(Long id) {
         User user = userRepository.getById(id);
-        if (user == null) {
-            throw new NotFoundException("Пользователь с id " + id + " не найден");
-        }
         return UserMapper.toUserDto(user);
     }
 
@@ -45,26 +40,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(UserDto userDto) {
-        User existingUser = userRepository.getById(userDto.getId());
-        if (existingUser == null) {
-            throw new NotFoundException("Пользователь с id " + userDto.getId() + " не найден");
-        }
+        User userToUpdate = new User();
+        userToUpdate.setId(userDto.getId());
+        userToUpdate.setName(userDto.getName()); // может быть null
+        userToUpdate.setEmail(userDto.getEmail()); // может быть null
 
-        if (userDto.getName() != null) {
-            existingUser.setName(userDto.getName());
-        }
-
-        if (userDto.getEmail() != null) {
-            existingUser.setEmail(userDto.getEmail());
-        }
-
-        User updatedUser = userRepository.update(existingUser);
+        User updatedUser = userRepository.update(userToUpdate);
         return UserMapper.toUserDto(updatedUser);
     }
 
     @Override
     public void delete(Long id) {
-        getById(id);
         userRepository.delete(id);
     }
 }

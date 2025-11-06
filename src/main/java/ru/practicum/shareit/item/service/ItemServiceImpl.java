@@ -9,7 +9,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.user.mapper.UserMapper;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,8 +25,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto create(ItemDto itemDto, Long ownerId) {
-        // Получаем UserDto из сервиса и преобразуем в User модель
-        User owner = UserMapper.toUser(userService.getById(ownerId));
+        User owner = getUserById(ownerId);
         Item item = ItemMapper.toItem(itemDto, owner);
         Item createdItem = itemRepository.create(item);
         return ItemMapper.toItemDto(createdItem);
@@ -41,13 +39,14 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException("Пользователь не является владельцем вещи");
         }
 
-        // Обновляем только переданные поля (PATCH логика)
-        if (itemDto.getName() != null) existingItem.setName(itemDto.getName());
-        if (itemDto.getDescription() != null) existingItem.setDescription(itemDto.getDescription());
-        if (itemDto.getAvailable() != null) existingItem.setAvailable(itemDto.getAvailable());
-        if (itemDto.getRequestId() != null) existingItem.setRequestId(itemDto.getRequestId());
+        Item itemToUpdate = new Item();
+        itemToUpdate.setId(itemDto.getId());
+        itemToUpdate.setName(itemDto.getName());
+        itemToUpdate.setDescription(itemDto.getDescription());
+        itemToUpdate.setAvailable(itemDto.getAvailable());
+        itemToUpdate.setRequestId(itemDto.getRequestId());
 
-        Item updatedItem = itemRepository.update(existingItem);
+        Item updatedItem = itemRepository.update(itemToUpdate);
         return ItemMapper.toItemDto(updatedItem);
     }
 
@@ -59,8 +58,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getByOwnerId(Long ownerId) {
-        // Проверяем, что пользователь существует
-        userService.getById(ownerId);
+        getUserById(ownerId);
         return itemRepository.getByOwnerId(ownerId).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
@@ -85,10 +83,11 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Item getItemById(Long itemId) {
-        Item item = itemRepository.getById(itemId);
-        if (item == null) {
-            throw new NotFoundException("Вещь с id " + itemId + " не найдена");
-        }
-        return item;
+        return itemRepository.getById(itemId);
+    }
+
+    private User getUserById(Long userId) {
+        ru.practicum.shareit.user.dto.UserDto userDto = userService.getById(userId);
+        return new User(userDto.getId(), userDto.getName(), userDto.getEmail());
     }
 }
