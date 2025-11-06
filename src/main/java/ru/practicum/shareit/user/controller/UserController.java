@@ -1,11 +1,9 @@
 package ru.practicum.shareit.user.controller;
 
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
-
 import java.util.Collection;
 
 @RestController
@@ -19,27 +17,28 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<User> getAll() {
+    public Collection<UserDto> getAll() {
         return userService.getAll();
     }
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
-        return userService.getUser(id);
+    public UserDto getById(@PathVariable Long id) {
+        return userService.getById(id);
     }
 
     @PostMapping
-    public User create(@Valid @RequestBody User user) {
-        return userService.create(user);
+    public UserDto create(@RequestBody UserDto userDto) {
+        return userService.create(userDto);
     }
 
-    @PutMapping
-    public User update(@Valid @RequestBody User user) {
-        return userService.update(user);
+    @PatchMapping("/{id}")
+    public UserDto update(@RequestBody UserDto userDto, @PathVariable Long id) {
+        userDto.setId(id);
+        return userService.update(userDto);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    public void delete(@PathVariable Long id) {
+        userService.delete(id);
     }
 }

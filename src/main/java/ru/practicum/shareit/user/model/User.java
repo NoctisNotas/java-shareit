@@ -1,19 +1,16 @@
 package ru.practicum.shareit.user.model;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-
-    private Long Id;
-
+    private Long id;
     private String name;
-
-    @NotBlank(message = "Адрес электронной почты не должен быть пустым")
-    @Email(message = "Адрес электронной почты должен соответствовать формату")
     private String email;
 }
