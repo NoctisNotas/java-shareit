@@ -6,6 +6,7 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
+
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -40,10 +41,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(UserDto userDto) {
+        User existingUser = userRepository.getById(userDto.getId());
+
         User userToUpdate = new User();
         userToUpdate.setId(userDto.getId());
-        userToUpdate.setName(userDto.getName()); // может быть null
-        userToUpdate.setEmail(userDto.getEmail()); // может быть null
+        userToUpdate.setName(userDto.getName() != null ? userDto.getName() : existingUser.getName());
+        userToUpdate.setEmail(userDto.getEmail() != null ? userDto.getEmail() : existingUser.getEmail());
 
         User updatedUser = userRepository.update(userToUpdate);
         return UserMapper.toUserDto(updatedUser);

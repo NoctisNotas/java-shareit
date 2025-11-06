@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemUpdateDto;
 import ru.practicum.shareit.item.service.ItemService;
+
 import java.util.List;
 
 @RestController
@@ -24,10 +26,13 @@ public class ItemController {
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto update(@Valid @RequestBody ItemDto itemDto,
+    public ItemDto update(@Valid @RequestBody ItemUpdateDto itemUpdateDto,
                           @PathVariable Long itemId,
                           @RequestHeader("X-Sharer-User-Id") Long ownerId) {
-        itemDto.setId(itemId);
+        ItemDto itemDto = new ItemDto(itemId, itemUpdateDto.getName(),
+                itemUpdateDto.getDescription(),
+                itemUpdateDto.getAvailable(),
+                itemUpdateDto.getRequestId());
         return itemService.update(itemDto, ownerId);
     }
 

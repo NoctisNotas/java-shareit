@@ -9,6 +9,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,10 +42,11 @@ public class ItemServiceImpl implements ItemService {
 
         Item itemToUpdate = new Item();
         itemToUpdate.setId(itemDto.getId());
-        itemToUpdate.setName(itemDto.getName());
-        itemToUpdate.setDescription(itemDto.getDescription());
-        itemToUpdate.setAvailable(itemDto.getAvailable());
-        itemToUpdate.setRequestId(itemDto.getRequestId());
+        itemToUpdate.setOwner(existingItem.getOwner());
+        itemToUpdate.setName(itemDto.getName() != null ? itemDto.getName() : existingItem.getName());
+        itemToUpdate.setDescription(itemDto.getDescription() != null ? itemDto.getDescription() : existingItem.getDescription());
+        itemToUpdate.setAvailable(itemDto.getAvailable() != null ? itemDto.getAvailable() : existingItem.getAvailable());
+        itemToUpdate.setRequestId(itemDto.getRequestId() != null ? itemDto.getRequestId() : existingItem.getRequestId());
 
         Item updatedItem = itemRepository.update(itemToUpdate);
         return ItemMapper.toItemDto(updatedItem);
