@@ -198,15 +198,13 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentResponseDto addComment(Long itemId, CommentDto commentDto, Long userId) {
-        // Проверяем существование пользователя и вещи
         User author = new User();
         author.setId(userId);
-        userService.getById(userId); // проверяем что пользователь существует
+        userService.getById(userId);
 
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Вещь с id " + itemId + " не найдена"));
 
-        // Проверяем, что пользователь действительно брал вещь в аренду
         List<Booking> userBookings = bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(
                 itemId, userId, BookingStatus.APPROVED, LocalDateTime.now());
 
@@ -214,7 +212,6 @@ public class ItemServiceImpl implements ItemService {
             throw new BadRequestException("Пользователь не брал вещь в аренду или аренда еще не завершена");
         }
 
-        // Создаем комментарий
         Comment comment = CommentMapper.toComment(commentDto);
         comment.setItem(item);
         comment.setAuthor(author);
