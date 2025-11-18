@@ -53,10 +53,6 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("Некорректные даты бронирования");
         }
 
-        if (item.getOwner().getId().equals(userId)) {
-            throw new NotFoundException("Владелец не может бронировать свою вещь");
-        }
-
         Booking booking = BookingMapper.toBooking(bookingDto);
         booking.setItem(item);
         booking.setBooker(booker);
