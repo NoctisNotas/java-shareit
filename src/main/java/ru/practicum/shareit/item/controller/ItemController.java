@@ -13,6 +13,7 @@ import java.util.List;
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
+    private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
     @Autowired
     public ItemController(ItemService itemService) {
@@ -21,14 +22,14 @@ public class ItemController {
 
     @PostMapping
     public ItemDto create(@Valid @RequestBody ItemDto itemDto,
-                          @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+                          @RequestHeader(USER_ID_HEADER) Long ownerId) {
         return itemService.create(itemDto, ownerId);
     }
 
     @PatchMapping("/{itemId}")
     public ItemDto update(@Valid @RequestBody ItemUpdateDto itemUpdateDto,
                           @PathVariable Long itemId,
-                          @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+                          @RequestHeader(USER_ID_HEADER) Long ownerId) {
         ItemDto itemDto = new ItemDto(itemId, itemUpdateDto.getName(),
                 itemUpdateDto.getDescription(),
                 itemUpdateDto.getAvailable(),
@@ -42,7 +43,7 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getByOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
+    public List<ItemDto> getByOwner(@RequestHeader(USER_ID_HEADER) Long ownerId) {
         return itemService.getByOwnerId(ownerId);
     }
 
@@ -53,7 +54,7 @@ public class ItemController {
 
     @DeleteMapping("/{itemId}")
     public void delete(@PathVariable Long itemId,
-                       @RequestHeader("X-Sharer-User-Id") Long ownerId) {
+                       @RequestHeader(USER_ID_HEADER) Long ownerId) {
         itemService.delete(itemId, ownerId);
     }
 }
