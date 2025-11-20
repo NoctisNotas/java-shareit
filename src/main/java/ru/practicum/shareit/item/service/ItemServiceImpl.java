@@ -15,11 +15,11 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -90,9 +90,7 @@ public class ItemServiceImpl implements ItemService {
         itemWithBookingsDto.setRequestId(item.getRequestId());
         itemWithBookingsDto.setComments(comments);
 
-        // Показываем информацию о бронированиях только владельцу
         if (item.getOwner().getId().equals(userId)) {
-            // Последнее бронирование (закончившееся или текущее)
             List<Booking> lastBookings = bookingRepository.findByItemIdAndEndBeforeOrderByEndDesc(
                     itemId, LocalDateTime.now());
             if (!lastBookings.isEmpty()) {
@@ -105,7 +103,6 @@ public class ItemServiceImpl implements ItemService {
                 ));
             }
 
-            // Следующее бронирование
             List<Booking> nextBookings = bookingRepository.findByItemIdAndStartAfterOrderByStartAsc(
                     itemId, LocalDateTime.now());
             if (!nextBookings.isEmpty()) {
@@ -142,7 +139,6 @@ public class ItemServiceImpl implements ItemService {
             dto.setRequestId(item.getRequestId());
             dto.setComments(comments);
 
-            // Для владельца показываем информацию о бронированиях
             List<Booking> lastBookings = bookingRepository.findByItemIdAndEndBeforeOrderByEndDesc(
                     item.getId(), LocalDateTime.now());
             if (!lastBookings.isEmpty()) {
@@ -198,26 +194,38 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentResponseDto addComment(Long itemId, CommentDto commentDto, Long userId) {
-        User author = new User();
-        author.setId(userId);
-        userService.getById(userId);
+        UserDto userDto = userService.getById(userId);
 
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Вещь с id " + itemId + " не найдена"));
 
-        List<Booking> userBookings = bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(
-                itemId, userId, BookingStatus.APPROVED, LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> completedBookings = bookingRepository
+                .findByItemIdAndBookerIdAndStatusAndEndBefore(itemId, userId, BookingStatus.APPROVED, now);
 
-        if (userBookings.isEmpty()) {
+        if (completedBookings.isEmpty()) {
             throw new BadRequestException("Пользователь не брал вещь в аренду или аренда еще не завершена");
         }
 
-        Comment comment = CommentMapper.toComment(commentDto);
+        Comment comment = new Comment();
+        comment.setText(commentDto.getText());
         comment.setItem(item);
-        comment.setAuthor(author);
-        comment.setCreated(LocalDateTime.now());
 
+        User author = new User();
+        author.setId(userId);
+        comment.setAuthor(author);
+        comment.setCreated(now);
         Comment savedComment = commentRepository.save(comment);
-        return CommentMapper.toCommentResponseDto(savedComment);
+
+        return createCommentResponseDto(savedComment, userDto);
+    }
+
+    private CommentResponseDto createCommentResponseDto(Comment comment, UserDto userDto) {
+        CommentResponseDto dto = new CommentResponseDto();
+        dto.setId(comment.getId());
+        dto.setText(comment.getText());
+        dto.setAuthorName(userDto.getName());
+        dto.setCreated(comment.getCreated());
+        return dto;
     }
 }
