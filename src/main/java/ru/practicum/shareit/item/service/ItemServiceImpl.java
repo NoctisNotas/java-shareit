@@ -1,95 +1,231 @@
 package ru.practicum.shareit.item.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.*;
+import ru.practicum.shareit.item.mapper.CommentMapper;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserService userService;
-
-    @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService) {
-        this.itemRepository = itemRepository;
-        this.userService = userService;
-    }
+    private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
 
     @Override
+    @Transactional
     public ItemDto create(ItemDto itemDto, Long ownerId) {
-        User owner = getUserById(ownerId);
+        userService.getById(ownerId);
+
+        User owner = new User();
+        owner.setId(ownerId);
+
         Item item = ItemMapper.toItem(itemDto, owner);
-        Item createdItem = itemRepository.create(item);
+        Item createdItem = itemRepository.save(item);
         return ItemMapper.toItemDto(createdItem);
     }
 
     @Override
+    @Transactional
     public ItemDto update(ItemDto itemDto, Long ownerId) {
-        Item existingItem = getItemById(itemDto.getId());
+        Item existingItem = itemRepository.findById(itemDto.getId())
+                .orElseThrow(() -> new NotFoundException("Вещь с id " + itemDto.getId() + " не найдена"));
 
         if (!existingItem.getOwner().getId().equals(ownerId)) {
             throw new NotFoundException("Пользователь не является владельцем вещи");
         }
 
-        Item itemToUpdate = new Item();
-        itemToUpdate.setId(itemDto.getId());
-        itemToUpdate.setOwner(existingItem.getOwner());
-        itemToUpdate.setName(itemDto.getName() != null ? itemDto.getName() : existingItem.getName());
-        itemToUpdate.setDescription(itemDto.getDescription() != null ? itemDto.getDescription() : existingItem.getDescription());
-        itemToUpdate.setAvailable(itemDto.getAvailable() != null ? itemDto.getAvailable() : existingItem.getAvailable());
-        itemToUpdate.setRequestId(itemDto.getRequestId() != null ? itemDto.getRequestId() : existingItem.getRequestId());
+        if (itemDto.getName() != null) {
+            existingItem.setName(itemDto.getName());
+        }
+        if (itemDto.getDescription() != null) {
+            existingItem.setDescription(itemDto.getDescription());
+        }
+        if (itemDto.getAvailable() != null) {
+            existingItem.setAvailable(itemDto.getAvailable());
+        }
+        if (itemDto.getRequestId() != null) {
+            existingItem.setRequestId(itemDto.getRequestId());
+        }
 
-        Item updatedItem = itemRepository.update(itemToUpdate);
+        Item updatedItem = itemRepository.save(existingItem);
         return ItemMapper.toItemDto(updatedItem);
     }
 
     @Override
-    public ItemDto getById(Long itemId) {
-        Item item = getItemById(itemId);
-        return ItemMapper.toItemDto(item);
+    public ItemWithBookingsDto getById(Long itemId, Long userId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь с id " + itemId + " не найдена"));
+
+        List<CommentResponseDto> comments = commentRepository.findByItemIdOrderByCreatedDesc(itemId)
+                .stream()
+                .map(CommentMapper::toCommentResponseDto)
+                .collect(Collectors.toList());
+
+        ItemWithBookingsDto itemWithBookingsDto = new ItemWithBookingsDto();
+        itemWithBookingsDto.setId(item.getId());
+        itemWithBookingsDto.setName(item.getName());
+        itemWithBookingsDto.setDescription(item.getDescription());
+        itemWithBookingsDto.setAvailable(item.getAvailable());
+        itemWithBookingsDto.setRequestId(item.getRequestId());
+        itemWithBookingsDto.setComments(comments);
+
+        if (item.getOwner().getId().equals(userId)) {
+            List<Booking> lastBookings = bookingRepository.findByItemIdAndEndBeforeOrderByEndDesc(
+                    itemId, LocalDateTime.now());
+            if (!lastBookings.isEmpty()) {
+                Booking lastBooking = lastBookings.get(0);
+                itemWithBookingsDto.setLastBooking(new BookingInfoDto(
+                        lastBooking.getId(),
+                        lastBooking.getBooker().getId(),
+                        lastBooking.getStart(),
+                        lastBooking.getEnd()
+                ));
+            }
+
+            List<Booking> nextBookings = bookingRepository.findByItemIdAndStartAfterOrderByStartAsc(
+                    itemId, LocalDateTime.now());
+            if (!nextBookings.isEmpty()) {
+                Booking nextBooking = nextBookings.get(0);
+                itemWithBookingsDto.setNextBooking(new BookingInfoDto(
+                        nextBooking.getId(),
+                        nextBooking.getBooker().getId(),
+                        nextBooking.getStart(),
+                        nextBooking.getEnd()
+                ));
+            }
+        }
+
+        return itemWithBookingsDto;
     }
 
     @Override
-    public List<ItemDto> getByOwnerId(Long ownerId) {
-        getUserById(ownerId);
-        return itemRepository.getByOwnerId(ownerId).stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public List<ItemWithBookingsDto> getByOwnerId(Long ownerId) {
+        userService.getById(ownerId);
+
+        List<Item> items = itemRepository.findByOwnerIdOrderById(ownerId);
+
+        return items.stream().map(item -> {
+            List<CommentResponseDto> comments = commentRepository.findByItemIdOrderByCreatedDesc(item.getId())
+                    .stream()
+                    .map(CommentMapper::toCommentResponseDto)
+                    .collect(Collectors.toList());
+
+            ItemWithBookingsDto dto = new ItemWithBookingsDto();
+            dto.setId(item.getId());
+            dto.setName(item.getName());
+            dto.setDescription(item.getDescription());
+            dto.setAvailable(item.getAvailable());
+            dto.setRequestId(item.getRequestId());
+            dto.setComments(comments);
+
+            List<Booking> lastBookings = bookingRepository.findByItemIdAndEndBeforeOrderByEndDesc(
+                    item.getId(), LocalDateTime.now());
+            if (!lastBookings.isEmpty()) {
+                Booking lastBooking = lastBookings.get(0);
+                dto.setLastBooking(new BookingInfoDto(
+                        lastBooking.getId(),
+                        lastBooking.getBooker().getId(),
+                        lastBooking.getStart(),
+                        lastBooking.getEnd()
+                ));
+            }
+
+            List<Booking> nextBookings = bookingRepository.findByItemIdAndStartAfterOrderByStartAsc(
+                    item.getId(), LocalDateTime.now());
+            if (!nextBookings.isEmpty()) {
+                Booking nextBooking = nextBookings.get(0);
+                dto.setNextBooking(new BookingInfoDto(
+                        nextBooking.getId(),
+                        nextBooking.getBooker().getId(),
+                        nextBooking.getStart(),
+                        nextBooking.getEnd()
+                ));
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Override
     public List<ItemDto> search(String text) {
-        return itemRepository.search(text).stream()
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+
+        return itemRepository.searchAvailableItems(text).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public void delete(Long itemId, Long ownerId) {
-        Item item = getItemById(itemId);
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь с id " + itemId + " не найдена"));
 
         if (!item.getOwner().getId().equals(ownerId)) {
             throw new NotFoundException("Пользователь не является владельцем вещи");
         }
 
-        itemRepository.delete(itemId);
+        itemRepository.deleteById(itemId);
     }
 
-    private Item getItemById(Long itemId) {
-        return itemRepository.getById(itemId);
+    @Override
+    @Transactional
+    public CommentResponseDto addComment(Long itemId, CommentDto commentDto, Long userId) {
+        UserDto userDto = userService.getById(userId);
+
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь с id " + itemId + " не найдена"));
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> completedBookings = bookingRepository
+                .findByItemIdAndBookerIdAndStatusAndEndBefore(itemId, userId, BookingStatus.APPROVED, now);
+
+        if (completedBookings.isEmpty()) {
+            throw new BadRequestException("Пользователь не брал вещь в аренду или аренда еще не завершена");
+        }
+
+        Comment comment = new Comment();
+        comment.setText(commentDto.getText());
+        comment.setItem(item);
+
+        User author = new User();
+        author.setId(userId);
+        comment.setAuthor(author);
+        comment.setCreated(now);
+        Comment savedComment = commentRepository.save(comment);
+
+        return createCommentResponseDto(savedComment, userDto);
     }
 
-    private User getUserById(Long userId) {
-        ru.practicum.shareit.user.dto.UserDto userDto = userService.getById(userId);
-        return new User(userDto.getId(), userDto.getName(), userDto.getEmail());
+    private CommentResponseDto createCommentResponseDto(Comment comment, UserDto userDto) {
+        CommentResponseDto dto = new CommentResponseDto();
+        dto.setId(comment.getId());
+        dto.setText(comment.getText());
+        dto.setAuthorName(userDto.getName());
+        dto.setCreated(comment.getCreated());
+        return dto;
     }
 }
