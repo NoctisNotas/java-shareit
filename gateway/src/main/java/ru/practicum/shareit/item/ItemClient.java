@@ -29,6 +29,7 @@ public class ItemClient extends BaseClient {
     }
 
     public ResponseEntity<Object> update(Long itemId, ItemDto itemDto, Long ownerId) {
+        itemDto.setId(itemId);
         return patch("/" + itemId, ownerId, null, itemDto);
     }
 
