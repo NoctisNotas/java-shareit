@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +11,6 @@ import ru.practicum.shareit.client.BaseClient;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class BookingClient extends BaseClient {
     private static final String API_PREFIX = "/bookings";
 
