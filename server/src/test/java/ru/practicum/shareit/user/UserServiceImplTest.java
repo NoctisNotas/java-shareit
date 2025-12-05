@@ -161,4 +161,31 @@ public class UserServiceImplTest {
         verify(userRepository).existsById(999L);
         verify(userRepository, never()).deleteById(any());
     }
+
+    @Test
+    void updateUserOnlyName() {
+        User existingUser = new User(1L, "Old Name", "email@example.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any(User.class))).thenReturn(existingUser);
+
+        UserDto updateDto = new UserDto(1L, "New Name", null);
+        UserDto result = userService.update(updateDto);
+
+        assertEquals("New Name", result.getName());
+        assertEquals("email@example.com", result.getEmail());
+    }
+
+    @Test
+    void updateUserOnlyEmail() {
+        User existingUser = new User(1L, "Name", "old@example.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByEmailAndIdNot("new@example.com", 1L)).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(existingUser);
+
+        UserDto updateDto = new UserDto(1L, null, "new@example.com");
+        UserDto result = userService.update(updateDto);
+
+        assertEquals("Name", result.getName());
+        assertEquals("new@example.com", result.getEmail());
+    }
 }

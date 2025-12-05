@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.controller.ItemController;
 import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.service.ItemService;
@@ -142,5 +143,28 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.text", is("Great item!")))
                 .andExpect(jsonPath("$.authorName", is("John")))
                 .andExpect(jsonPath("$.created", notNullValue()));
+    }
+
+    @Test
+    void getNonExistentItemShouldReturnNotFound() throws Exception {
+        when(itemService.getById(anyLong(), anyLong())).thenThrow(new NotFoundException("Вещь не найдена"));
+
+        mvc.perform(get("/items/999999")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void updateItemNotByOwnerShouldReturnNotFound() throws Exception {
+        ItemDto itemDto = new ItemDto(1L, "Updated", "Description", true, null);
+        when(itemService.update(any(ItemDto.class), anyLong())).thenThrow(new NotFoundException("Пользователь не является владельцем"));
+
+        mvc.perform(patch("/items/1")
+                        .header("X-Sharer-User-Id", 999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(itemDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
     }
 }

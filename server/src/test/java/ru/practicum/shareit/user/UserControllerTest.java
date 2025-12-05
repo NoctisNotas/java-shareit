@@ -7,6 +7,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.controller.UserController;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
@@ -94,5 +96,26 @@ public class UserControllerTest {
     @Test
     void deleteValidIdReturnsOk() throws Exception {
         mockMvc.perform(delete("/users/{id}", 1L)).andExpect(status().isOk());
+    }
+
+    @Test
+    void getNonExistentUserShouldReturnNotFound() throws Exception {
+        when(userService.getById(999L)).thenThrow(new NotFoundException("Пользователь не найден"));
+
+        mockMvc.perform(get("/users/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void updateUserWithDuplicateEmailShouldReturnConflict() throws Exception {
+        UserDto userDto = new UserDto(1L, "John", "duplicate@example.com");
+        when(userService.update(any(UserDto.class))).thenThrow(new ValidationException("Email уже существует"));
+
+        mockMvc.perform(patch("/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userDto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").exists());
     }
 }

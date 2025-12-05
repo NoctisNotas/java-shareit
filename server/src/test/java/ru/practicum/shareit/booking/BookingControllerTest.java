@@ -13,6 +13,7 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
@@ -156,5 +157,27 @@ class BookingControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", notNullValue()));
+    }
+
+    @Test
+    void createBookingWithoutUserIdHeaderShouldReturnBadRequest() throws Exception {
+        String invalidBooking = "{\"start\":\"2024-01-01T10:00:00\",\"end\":\"2024-01-02T10:00:00\",\"itemId\":1}";
+
+        mvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBooking))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void getNonExistentBookingShouldReturnNotFound() throws Exception {
+        when(bookingService.getById(anyLong(), anyLong()))
+                .thenThrow(new NotFoundException("Бронирование не найдено"));
+
+        mvc.perform(get("/bookings/999999")
+                        .header("X-Sharer-User-Id", 1L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
     }
 }
