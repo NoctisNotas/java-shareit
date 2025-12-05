@@ -241,7 +241,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getUserBookings_CurrentState_ReturnsBookings() {
+    void getUserBookingsCurrentStateReturnsBookings() {
         when(userRepository.existsById(2L)).thenReturn(true);
         when(bookingRepository.findByBookerIdAndStartBeforeAndEndAfterOrderByStartDesc(
                 eq(2L), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class)))
@@ -256,7 +256,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getUserBookings_PastState_ReturnsBookings() {
+    void getUserBookingsPastStateReturnsBookings() {
         when(userRepository.existsById(2L)).thenReturn(true);
         when(bookingRepository.findByBookerIdAndEndBeforeOrderByStartDesc(
                 eq(2L), any(LocalDateTime.class), any(Pageable.class)))
@@ -271,7 +271,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getUserBookings_FutureState_ReturnsBookings() {
+    void getUserBookingsFutureStateReturnsBookings() {
         when(userRepository.existsById(2L)).thenReturn(true);
         when(bookingRepository.findByBookerIdAndStartAfterOrderByStartDesc(
                 eq(2L), any(LocalDateTime.class), any(Pageable.class)))
@@ -286,7 +286,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getUserBookings_RejectedState_ReturnsBookings() {
+    void getUserBookingsRejectedStateReturnsBookings() {
         when(userRepository.existsById(2L)).thenReturn(true);
         when(bookingRepository.findByBookerIdAndStatusOrderByStartDesc(
                 eq(2L), eq(BookingStatus.REJECTED), any(Pageable.class)))
@@ -301,7 +301,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getUserBookings_UserNotFound_ThrowsNotFoundException() {
+    void getUserBookingsUserNotFoundThrowsNotFoundException() {
         when(userRepository.existsById(999L)).thenReturn(false);
 
         NotFoundException exception = assertThrows(NotFoundException.class,
@@ -311,7 +311,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_CurrentState_ReturnsBookings() {
+    void getOwnerBookingsCurrentStateReturnsBookings() {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(bookingRepository.findByItemOwnerIdCurrentOrderByStartDesc(
                 eq(1L), any(LocalDateTime.class), any(Pageable.class)))
@@ -326,7 +326,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_PastState_ReturnsBookings() {
+    void getOwnerBookingsPastStateReturnsBookings() {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(bookingRepository.findByItemOwnerIdAndEndBeforeOrderByStartDesc(
                 eq(1L), any(LocalDateTime.class), any(Pageable.class)))
@@ -341,7 +341,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_FutureState_ReturnsBookings() {
+    void getOwnerBookingsFutureStateReturnsBookings() {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(bookingRepository.findByItemOwnerIdAndStartAfterOrderByStartDesc(
                 eq(1L), any(LocalDateTime.class), any(Pageable.class)))
@@ -356,7 +356,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_WaitingState_ReturnsBookings() {
+    void getOwnerBookingsWaitingStateReturnsBookings() {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(
                 eq(1L), eq(BookingStatus.WAITING), any(Pageable.class)))
@@ -371,7 +371,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_RejectedState_ReturnsBookings() {
+    void getOwnerBookingsRejectedStateReturnsBookings() {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(
                 eq(1L), eq(BookingStatus.REJECTED), any(Pageable.class)))
@@ -386,7 +386,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_InvalidState_ThrowsBadRequestException() {
+    void getOwnerBookingsInvalidStateThrowsBadRequestException() {
         when(userRepository.existsById(1L)).thenReturn(true);
 
         BadRequestException exception = assertThrows(BadRequestException.class,
@@ -396,7 +396,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void getOwnerBookings_OwnerNotFound_ThrowsNotFoundException() {
+    void getOwnerBookingsOwnerNotFoundThrowsNotFoundException() {
         when(userRepository.existsById(999L)).thenReturn(false);
 
         NotFoundException exception = assertThrows(NotFoundException.class,
