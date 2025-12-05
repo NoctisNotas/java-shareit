@@ -9,10 +9,15 @@ import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.json.JsonContent;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.mapper.BookingMapper;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.BookingStatus;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @JsonTest
 class BookingDtoJsonTest {
@@ -87,5 +92,19 @@ class BookingDtoJsonTest {
         assertThat(bookingDto.getEnd())
                 .isEqualTo(LocalDateTime.of(2024, 1, 2, 10, 0));
         assertThat(bookingDto.getItemId()).isEqualTo(10L);
+    }
+
+    @Test
+    void toBookingShouldMapDtoToEntity() {
+        LocalDateTime start = LocalDateTime.now().plusDays(1);
+        LocalDateTime end = LocalDateTime.now().plusDays(2);
+        BookingDto dto = new BookingDto(1L, start, end, 10L, "WAITING");
+
+        Booking booking = BookingMapper.toBooking(dto);
+
+        assertNotNull(booking);
+        assertEquals(start, booking.getStart());
+        assertEquals(end, booking.getEnd());
+        assertEquals(BookingStatus.WAITING, booking.getStatus());
     }
 }
