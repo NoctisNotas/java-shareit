@@ -239,4 +239,169 @@ class BookingServiceImplTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void getUserBookings_CurrentState_ReturnsBookings() {
+        when(userRepository.existsById(2L)).thenReturn(true);
+        when(bookingRepository.findByBookerIdAndStartBeforeAndEndAfterOrderByStartDesc(
+                eq(2L), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getUserBookings(2L, "CURRENT", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByBookerIdAndStartBeforeAndEndAfterOrderByStartDesc(
+                eq(2L), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class));
+    }
+
+    @Test
+    void getUserBookings_PastState_ReturnsBookings() {
+        when(userRepository.existsById(2L)).thenReturn(true);
+        when(bookingRepository.findByBookerIdAndEndBeforeOrderByStartDesc(
+                eq(2L), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getUserBookings(2L, "PAST", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByBookerIdAndEndBeforeOrderByStartDesc(
+                eq(2L), any(LocalDateTime.class), any(Pageable.class));
+    }
+
+    @Test
+    void getUserBookings_FutureState_ReturnsBookings() {
+        when(userRepository.existsById(2L)).thenReturn(true);
+        when(bookingRepository.findByBookerIdAndStartAfterOrderByStartDesc(
+                eq(2L), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getUserBookings(2L, "FUTURE", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByBookerIdAndStartAfterOrderByStartDesc(
+                eq(2L), any(LocalDateTime.class), any(Pageable.class));
+    }
+
+    @Test
+    void getUserBookings_RejectedState_ReturnsBookings() {
+        when(userRepository.existsById(2L)).thenReturn(true);
+        when(bookingRepository.findByBookerIdAndStatusOrderByStartDesc(
+                eq(2L), eq(BookingStatus.REJECTED), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getUserBookings(2L, "REJECTED", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByBookerIdAndStatusOrderByStartDesc(
+                eq(2L), eq(BookingStatus.REJECTED), any(Pageable.class));
+    }
+
+    @Test
+    void getUserBookings_UserNotFound_ThrowsNotFoundException() {
+        when(userRepository.existsById(999L)).thenReturn(false);
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> bookingService.getUserBookings(999L, "ALL", 0, 10));
+
+        assertTrue(exception.getMessage().contains("Пользователь с id 999 не найден"));
+    }
+
+    @Test
+    void getOwnerBookings_CurrentState_ReturnsBookings() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.findByItemOwnerIdCurrentOrderByStartDesc(
+                eq(1L), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getOwnerBookings(1L, "CURRENT", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByItemOwnerIdCurrentOrderByStartDesc(
+                eq(1L), any(LocalDateTime.class), any(Pageable.class));
+    }
+
+    @Test
+    void getOwnerBookings_PastState_ReturnsBookings() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.findByItemOwnerIdAndEndBeforeOrderByStartDesc(
+                eq(1L), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getOwnerBookings(1L, "PAST", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByItemOwnerIdAndEndBeforeOrderByStartDesc(
+                eq(1L), any(LocalDateTime.class), any(Pageable.class));
+    }
+
+    @Test
+    void getOwnerBookings_FutureState_ReturnsBookings() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.findByItemOwnerIdAndStartAfterOrderByStartDesc(
+                eq(1L), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getOwnerBookings(1L, "FUTURE", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByItemOwnerIdAndStartAfterOrderByStartDesc(
+                eq(1L), any(LocalDateTime.class), any(Pageable.class));
+    }
+
+    @Test
+    void getOwnerBookings_WaitingState_ReturnsBookings() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(
+                eq(1L), eq(BookingStatus.WAITING), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getOwnerBookings(1L, "WAITING", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByItemOwnerIdAndStatusOrderByStartDesc(
+                eq(1L), eq(BookingStatus.WAITING), any(Pageable.class));
+    }
+
+    @Test
+    void getOwnerBookings_RejectedState_ReturnsBookings() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(
+                eq(1L), eq(BookingStatus.REJECTED), any(Pageable.class)))
+                .thenReturn(List.of(booking));
+
+        List<BookingResponseDto> result = bookingService.getOwnerBookings(1L, "REJECTED", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(bookingRepository).findByItemOwnerIdAndStatusOrderByStartDesc(
+                eq(1L), eq(BookingStatus.REJECTED), any(Pageable.class));
+    }
+
+    @Test
+    void getOwnerBookings_InvalidState_ThrowsBadRequestException() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> bookingService.getOwnerBookings(1L, "INVALID_STATE", 0, 10));
+
+        assertTrue(exception.getMessage().contains("Unknown state: INVALID_STATE"));
+    }
+
+    @Test
+    void getOwnerBookings_OwnerNotFound_ThrowsNotFoundException() {
+        when(userRepository.existsById(999L)).thenReturn(false);
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> bookingService.getOwnerBookings(999L, "ALL", 0, 10));
+
+        assertTrue(exception.getMessage().contains("Пользователь с id 999 не найден"));
+    }
 }
