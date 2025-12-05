@@ -15,7 +15,7 @@ public class UserDtoJsonTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void serialize_UserDto_ReturnsValidJson() throws Exception {
+    void serializeUserDtoReturnsValidJson() throws Exception {
         UserDto userDto = new UserDto(1L, "John Doe", "john@example.com");
         String json = objectMapper.writeValueAsString(userDto);
 
@@ -25,7 +25,7 @@ public class UserDtoJsonTest {
     }
 
     @Test
-    void deserialize_Json_ReturnsUserDto() throws Exception {
+    void deserializeJsonReturnsUserDto() throws Exception {
         String json = "{\"id\":1,\"name\":\"John Doe\",\"email\":\"john@example.com\"}";
         UserDto userDto = objectMapper.readValue(json, UserDto.class);
 
@@ -35,7 +35,7 @@ public class UserDtoJsonTest {
     }
 
     @Test
-    void deserialize_JsonWithoutId_ReturnsUserDtoWithNullId() throws Exception {
+    void deserializeJsonWithoutIdReturnsUserDtoWithNullId() throws Exception {
         String json = "{\"name\":\"John Doe\",\"email\":\"john@example.com\"}";
         UserDto userDto = objectMapper.readValue(json, UserDto.class);
 

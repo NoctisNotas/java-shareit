@@ -34,7 +34,7 @@ public class UserControllerTest {
     private UserService userService;
 
     @Test
-    void create_ValidUser_ReturnsUserDto() throws Exception {
+    void createValidUserReturnsUserDto() throws Exception {
         UserDto inputDto = new UserDto(null, "John", "john@example.com");
         UserDto outputDto = new UserDto(1L, "John", "john@example.com");
         when(userService.create(any(UserDto.class))).thenReturn(outputDto);
@@ -49,7 +49,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void getById_ExistingUser_ReturnsUser() throws Exception {
+    void getByIdExistingUserReturnsUser() throws Exception {
         UserDto userDto = new UserDto(1L, "John", "john@example.com");
         when(userService.getById(1L)).thenReturn(userDto);
 
@@ -61,7 +61,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void getAll_ReturnsAllUsers() throws Exception {
+    void getAllReturnsAllUsers() throws Exception {
         Collection<UserDto> users = Arrays.asList(
                 new UserDto(1L, "John", "john@example.com"),
                 new UserDto(2L, "Jane", "jane@example.com")
@@ -78,7 +78,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void update_ValidUpdate_ReturnsUpdatedUser() throws Exception {
+    void updateValidUpdateReturnsUpdatedUser() throws Exception {
         UserDto updateDto = new UserDto(1L, "John Updated", "john.updated@example.com");
         when(userService.update(any(UserDto.class))).thenReturn(updateDto);
 
@@ -92,8 +92,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void delete_ValidId_ReturnsOk() throws Exception {
-        mockMvc.perform(delete("/users/{id}", 1L))
-                .andExpect(status().isOk());
+    void deleteValidIdReturnsOk() throws Exception {
+        mockMvc.perform(delete("/users/{id}", 1L)).andExpect(status().isOk());
     }
 }

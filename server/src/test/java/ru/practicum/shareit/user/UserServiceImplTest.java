@@ -14,6 +14,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserServiceImpl;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +41,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void getById_ExistingId_ReturnsUserDto() {
+    void getByIdExistingIdReturnsUserDto() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         UserDto result = userService.getById(1L);
 
@@ -53,27 +54,25 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void getById_NonExistingId_ThrowsNotFoundException() {
+    void getByIdNonExistingIdThrowsNotFoundException() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(
-                NotFoundException.class,
-                () -> userService.getById(999L)
-        );
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> userService.getById(999L));
 
         assertEquals("Пользователь с id 999 не найден", exception.getMessage());
         verify(userRepository).findById(999L);
     }
 
     @Test
-    void getAll_ReturnsAllUsers() {
+    void getAllReturnsAllUsers() {
         List<User> users = List.of(
                 new User(1L, "User1", "user1@example.com"),
                 new User(2L, "User2", "user2@example.com")
         );
         when(userRepository.findAll()).thenReturn(users);
 
-        var result = userService.getAll();
+        Collection<UserDto> result = userService.getAll();
 
         assertNotNull(result);
         assertEquals(2, result.size());
@@ -81,7 +80,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void create_ValidUser_ReturnsCreatedUser() {
+    void createValidUserReturnsCreatedUser() {
         UserDto newUserDto = new UserDto(null, "New User", "new@example.com");
         User newUser = UserMapper.toUser(newUserDto);
         newUser.setId(3L);
@@ -100,7 +99,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void create_DuplicateEmail_ThrowsValidationException() {
+    void createDuplicateEmailThrowsValidationException() {
         when(userRepository.findByEmail("existing@example.com"))
                 .thenReturn(Optional.of(user));
 
@@ -109,14 +108,13 @@ public class UserServiceImplTest {
         ValidationException exception = assertThrows(ValidationException.class,
                 () -> userService.create(duplicateUser));
 
-        assertEquals("Пользователь с email existing@example.com уже существует",
-                exception.getMessage());
+        assertEquals("Пользователь с email existing@example.com уже существует", exception.getMessage());
         verify(userRepository).findByEmail("existing@example.com");
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void update_ValidUpdate_ReturnsUpdatedUser() {
+    void updateValidUpdateReturnsUpdatedUser() {
         UserDto updateDto = new UserDto(1L, "Updated Name", "updated@example.com");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -134,7 +132,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void update_NonExistingUser_ThrowsNotFoundException() {
+    void updateNonExistingUserThrowsNotFoundException() {
         UserDto updateDto = new UserDto(999L, "Updated", "updated@example.com");
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -146,7 +144,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void delete_ExistingUser_DeletesSuccessfully() {
+    void deleteExistingUserDeletesSuccessfully() {
         when(userRepository.existsById(1L)).thenReturn(true);
         userService.delete(1L);
 
@@ -155,7 +153,7 @@ public class UserServiceImplTest {
     }
 
     @Test
-    void delete_NonExistingUser_ThrowsNotFoundException() {
+    void deleteNonExistingUserThrowsNotFoundException() {
         when(userRepository.existsById(999L)).thenReturn(false);
         NotFoundException exception = assertThrows(NotFoundException.class, () -> userService.delete(999L));
 
